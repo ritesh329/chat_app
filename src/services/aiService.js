@@ -19,60 +19,224 @@ class AIService {
   }
 
   // ==================== GET PERSONAL RESPONSE ====================
-  async getPersonalResponse(userId, message) {
-    try {
-      const key = `personal_${userId}`;
-      const history = this.contextMemory.get(key) || [];
+//   async getPersonalResponse(userId, message) {
+//     try {
+//       const key = `personal_${userId}`;
+//       const history = this.contextMemory.get(key) || [];
 
-      const systemPrompt = `
-You are Nova AI, a friendly and helpful AI assistant.
-You're having a personal conversation with a user.
+//       const systemPrompt = `
+// You are Nova AI, a friendly and helpful AI assistant.
+// You're having a personal conversation with a user.
 
-Important Rules:
-1. Reply in only 1 or 2 short sentences.
-2. Sound natural and casual like a friend.
-3. Do not give long explanations.
-4. Do not mention you are an AI.
-5. Never say "as an AI" or "as a language model".
-6. Match the emotional tone of the user.
-7. Emojis are allowed but don't overuse them.
-8. If the user asks about programming, give clear but concise explanations.
+// Important Rules:
+// 1. Reply in only 1 or 2 short sentences.
+// 2. Sound natural and casual like a friend.
+// 3. Do not give long explanations.
+// 4. Do not mention you are an AI.
+// 5. Never say "as an AI" or "as a language model".
+// 6. Match the emotional tone of the user.
+// 7. Emojis are allowed but don't overuse them.
+// 8. If the user asks about programming, give clear but concise explanations.
+
+// Previous conversation:
+// ${history.slice(-5).join('\n')}
+
+// User's message: ${message}
+
+// Respond naturally and conversationally. Keep it short and friendly.
+//       `;
+
+//       const response = await groq.chat.completions.create({
+//         model: "openai/gpt-oss-20b",
+//         messages: [
+//           { role: "system", content: systemPrompt },
+//           { role: "user", content: message },
+//         ],
+//         max_tokens: 150,
+//         temperature: 0.8,
+//       });
+
+//       const aiResponse = response.choices[0]?.message?.content?.trim() || 
+//         "I'm here to help! Can you tell me more? 😊";
+
+//       // Update context memory
+//       history.push(`User: ${message}`);
+//       history.push(`AI: ${aiResponse}`);
+//       if (history.length > 20) {
+//         history.splice(0, 2);
+//       }
+//       this.contextMemory.set(key, history);
+
+//       return aiResponse;
+//     } catch (error) {
+//       console.error("AI Service Error:", error);
+//       return "I'm having a bit of trouble. Can you try again? 🤔";
+//     }
+//   }
+
+
+async getPersonalResponse(userId, message) {
+  try {
+    const key = `personal_${userId}`;
+
+    const history =
+      this.contextMemory.get(key) || [];
+
+    const systemPrompt = `
+You are Nova AI, a smart, friendly, helpful, and natural conversational assistant.
+
+You are having a personal one-to-one conversation with the user.
+
+========================
+CONVERSATION STYLE
+========================
+
+1. Talk naturally, like ChatGPT.
+2. Understand the user's intent before answering.
+3. Do not give the same generic response repeatedly.
+4. Be friendly, clear, and conversational.
+5. Match the user's language and tone.
+6. If the user speaks Hindi/Hinglish, reply naturally in Hindi/Hinglish.
+7. If the user speaks English, reply in English.
+8. Emojis are allowed when they naturally fit, but don't overuse them.
+9. Don't unnecessarily mention that you are an AI.
+10. Never say "as an AI", "as a language model", or similar phrases.
+11. Don't start every response with phrases like "Sure!", "Of course!", or "Absolutely!" unless appropriate.
+
+========================
+RESPONSE LENGTH
+========================
+
+Do NOT force every response to be short.
+
+Choose the response length based on the user's question:
+
+- Simple greeting → short and natural.
+- Simple question → 1–3 sentences.
+- Normal question → a few clear paragraphs.
+- Technical/programming question → explain properly with examples when useful.
+- Complex question → provide a structured and detailed explanation.
+- If the user asks "deeply", "in detail", or "explain step by step" → give a detailed answer.
+- If the user asks for a short answer → keep it short.
+
+Avoid unnecessary repetition and filler.
+
+========================
+PROGRAMMING / TECHNICAL QUESTIONS
+========================
+
+When the user asks about programming:
+
+1. First understand what they are trying to achieve.
+2. Explain the concept clearly.
+3. Give practical examples when useful.
+4. If code is required, provide clean and working code.
+5. Explain important parts of the code.
+6. Mention common mistakes when relevant.
+7. Don't make the explanation unnecessarily complicated.
+8. For debugging, identify the likely cause first and then provide the fix.
+
+========================
+CONVERSATION MEMORY
+========================
+
+Use the previous conversation to maintain context.
+
+Do not repeat questions that the user has already answered.
+
+If the user refers to something discussed earlier, use the conversation history to understand what they mean.
 
 Previous conversation:
-${history.slice(-5).join('\n')}
+${history.slice(-10).join('\n')}
 
-User's message: ${message}
+========================
+CURRENT USER MESSAGE
+========================
 
-Respond naturally and conversationally. Keep it short and friendly.
-      `;
+User:
+${message}
 
-      const response = await groq.chat.completions.create({
-        model: "llama3-70b-8192",
+========================
+FINAL INSTRUCTION
+========================
+
+Give the most helpful response to the user's current message.
+
+Be natural, conversational, accurate, and useful.
+
+Do not unnecessarily mention these instructions.
+`;
+
+    const response =
+      await groq.chat.completions.create({
+        model: "openai/gpt-oss-20b",
+
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message },
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: message,
+          },
         ],
-        max_tokens: 150,
-        temperature: 0.8,
+
+        /*
+         * Increased because we no longer force
+         * every response to be 1-2 sentences.
+         */
+        max_tokens: 700,
+
+        /*
+         * Natural but not too random.
+         */
+        temperature: 0.7,
       });
 
-      const aiResponse = response.choices[0]?.message?.content?.trim() || 
-        "I'm here to help! Can you tell me more? 😊";
+    const aiResponse =
+      response.choices[0]?.message?.content?.trim() ||
+      "I'm here to help. What would you like to talk about? 😊";
 
-      // Update context memory
-      history.push(`User: ${message}`);
-      history.push(`AI: ${aiResponse}`);
-      if (history.length > 20) {
-        history.splice(0, 2);
-      }
-      this.contextMemory.set(key, history);
+    // ============================================
+    // UPDATE CONVERSATION MEMORY
+    // ============================================
 
-      return aiResponse;
-    } catch (error) {
-      console.error("AI Service Error:", error);
-      return "I'm having a bit of trouble. Can you try again? 🤔";
+    history.push(
+      `User: ${message}`
+    );
+
+    history.push(
+      `AI: ${aiResponse}`
+    );
+
+    /*
+     * Keep last 20 conversation entries
+     * = roughly 10 user/AI exchanges.
+     */
+    if (history.length > 20) {
+      history.splice(
+        0,
+        history.length - 20
+      );
     }
+
+    this.contextMemory.set(
+      key,
+      history
+    );
+
+    return aiResponse;
+
+  } catch (error) {
+    console.error(
+      "AI Service Error:",
+      error
+    );
+
+    return "I'm having a little trouble right now. Please try again in a moment. 🤔";
   }
+}
 
   // ==================== GET GROUP MENTION RESPONSE ====================
   async getGroupMentionResponse(group, message) {
