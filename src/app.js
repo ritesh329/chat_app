@@ -137,7 +137,7 @@ app.use(helmet());
    ============================================================ */
 
 const allowedOrigins = [
-  'http://localhost:5173',
+  'https://frontendchatapp-k21l.onrender.com',
 ];
 
 app.use(
