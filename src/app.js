@@ -117,6 +117,7 @@ import uploadRoutes from './routes/upload.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 /* ============================================================
    DATABASE
