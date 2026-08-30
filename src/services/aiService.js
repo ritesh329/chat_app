@@ -1216,7 +1216,7 @@ Message: ${text}
           { role: "system", content: systemPrompt },
           { role: "user", content: text },
         ],
-        max_tokens: 10,
+        max_tokens: 500,
         temperature: 0.3,
       });
 
@@ -1234,6 +1234,7 @@ Message: ${text}
 
   // ==================== ROAST / COMPLIMENT BOT ====================
   async roastOrCompliment(text, mode = "roast") {
+     console.log("ddsdjsjd",text)
     try {
       const systemPrompt =
         mode === "roast"
@@ -1265,10 +1266,11 @@ Message: ${text}
           { role: "system", content: systemPrompt },
           { role: "user", content: text },
         ],
-        max_tokens: 80,
+        max_tokens: 800,
         temperature: 0.9,
       });
-
+     
+       console.log("BHJhHHHhdhhddhjhdjh rost compliment", response)
       return (
         response.choices[0]?.message?.content?.trim() ||
         (mode === "roast" ? "Haha nice try 😄" : "That's great! 👏")
@@ -1282,6 +1284,7 @@ Message: ${text}
   // ==================== ICEBREAKER GENERATOR ====================
   async generateIcebreaker(groupName) {
     try {
+      console.log("djdjjkd",groupName)
       const systemPrompt = `
 Generate ONE fun, interesting icebreaker question for a group chat called "${groupName || 'the group'}".
 Rules:
@@ -1298,7 +1301,7 @@ Rules:
           { role: "system", content: systemPrompt },
           { role: "user", content: "Generate an icebreaker question" },
         ],
-        max_tokens: 80,
+        max_tokens: 800,
         temperature: 1.0,
       });
 
