@@ -558,40 +558,74 @@ export const editMessage = async (req, res) => {
     const { content } = req.body;
 
     if (!content) {
-      return res.status(400).json({
-        success: false,
-        message: 'Content is required',
-      });
+      return res.status(400).json({ success: false, message: 'Content is required' });
     }
 
-    const message = await Message.findOne({
-      _id: messageId,
-      sender: req.user._id,
-    });
-
+    const message = await Message.findOne({ _id: messageId, sender: req.user._id });
     if (!message) {
-      return res.status(404).json({
-        success: false,
-        message: 'Message not found or unauthorized',
-      });
+      return res.status(404).json({ success: false, message: 'Message not found or unauthorized' });
     }
 
     message.content = content;
     message.isEdited = true;
     await message.save();
+    await message.populate('sender', 'username avatar');
 
-    res.json({
-      success: true,
-      message,
-    });
+    // 🔴 YEH MISSING THA — realtime broadcast
+    const io = req.app.get('io'); // ya jahan bhi tumne io store kiya hai
+    const Chat = (await import('../models/Chat.js')).default; // ya top pe import kar lo
+    const chat = await Chat.findById(message.chatId).populate('participants', '_id');
+
+    if (chat) {
+      chat.participants.forEach((participant) => {
+        io.to(`user_${participant._id}`).emit('message-edited', {
+          message,
+          chatId: message.chatId,
+        });
+      });
+    }
+
+    res.json({ success: true, message });
   } catch (error) {
     console.error('Edit message error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Server error',
-    });
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 };
+
+// @desc    Delete message
+// @route   DELETE /api/chat/message/:messageId
+// @access  Private
+// export const deleteMessage = async (req, res) => {
+//   try {
+//     const { messageId } = req.params;
+
+//     const message = await Message.findOne({
+//       _id: messageId,
+//       sender: req.user._id,
+//     });
+
+//     if (!message) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Message not found or unauthorized',
+//       });
+//     }
+
+//     message.isDeleted = true;
+//     await message.save();
+
+//     res.json({
+//       success: true,
+//       message: 'Message deleted successfully',
+//     });
+//   } catch (error) {
+//     console.error('Delete message error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message || 'Server error',
+//     });
+//   }
+// };
 
 // @desc    Delete message
 // @route   DELETE /api/chat/message/:messageId
@@ -614,6 +648,19 @@ export const deleteMessage = async (req, res) => {
 
     message.isDeleted = true;
     await message.save();
+
+    // 🔴 YEH ADD KARO — realtime broadcast
+    const io = req.app.get('io');
+    const chat = await Chat.findById(message.chatId).populate('participants', '_id');
+
+    if (chat && io) {
+      chat.participants.forEach((participant) => {
+        io.to(`user_${participant._id}`).emit('message-deleted', {
+          messageId,
+          chatId: message.chatId,
+        });
+      });
+    }
 
     res.json({
       success: true,
