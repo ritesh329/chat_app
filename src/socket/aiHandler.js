@@ -4,7 +4,7 @@ import Message from '../models/Message.js';
 const aiService = new AIService();
 
 export const handleAI = (io, socket) => {
-  // AI personal chat
+
   socket.on('ai-personal-message', async (data) => {
     try {
       const { content } = data;

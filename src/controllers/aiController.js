@@ -4,9 +4,6 @@ import Group from '../models/Group.js';
 
 const aiService = new AIService();
 
-// @desc    Get AI response for personal chat
-// @route   POST /api/ai/personal
-// @access  Private
 export const getPersonalAIResponse = async (req, res) => {
   try {
     const { message, context } = req.body;
@@ -30,9 +27,7 @@ export const getPersonalAIResponse = async (req, res) => {
   }
 };
 
-// @desc    Get AI response for group mention
-// @route   POST /api/ai/group/mention
-// @access  Private
+
 export const getGroupMentionResponse = async (req, res) => {
   try {
     const { groupId, message } = req.body;

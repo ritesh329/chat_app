@@ -4,9 +4,7 @@ import Chat from '../models/Chat.js';
 import Group from '../models/Group.js';
 import fs from 'fs';
 
-// ============================================================
-// GET MESSAGE TYPE
-// ============================================================
+
 const getMessageType = (fileName) => {
   const extension =
     fileName
@@ -60,9 +58,7 @@ const getMessageType = (fileName) => {
 };
 
 
-// ============================================================
-// UPLOAD SINGLE FILE
-// ============================================================
+
 export const uploadFile = async (
   req,
   res
@@ -92,9 +88,6 @@ export const uploadFile = async (
       `📤 Uploading file: ${req.file.originalname}`
     );
 
-    // ========================================================
-    // CLOUDINARY UPLOAD
-    // ========================================================
     const result =
       await cloudinary.uploader.upload(
         req.file.path,
@@ -111,9 +104,7 @@ export const uploadFile = async (
         req.file.originalname
       );
 
-    // ========================================================
-    // CREATE ONE MESSAGE
-    // ========================================================
+
     const messageData = {
       sender: req.user._id,
       chatId,
@@ -122,10 +113,7 @@ export const uploadFile = async (
 
       type: messageType,
 
-      /*
-       * Keep content empty for file messages.
-       * URL belongs in fileUrl.
-       */
+    
       content: '',
 
       fileUrl:
@@ -161,9 +149,6 @@ export const uploadFile = async (
         messageData
       );
 
-    // ========================================================
-    // UPDATE LAST MESSAGE
-    // ========================================================
     if (
       chatType === 'personal'
     ) {
@@ -197,9 +182,7 @@ export const uploadFile = async (
       'username avatar'
     );
 
-    // ========================================================
-    // DELETE TEMP FILE
-    // ========================================================
+  
     if (
       fs.existsSync(
         req.file.path
@@ -211,7 +194,7 @@ export const uploadFile = async (
     }
 
     console.log(
-      `✅ File uploaded: ${result.secure_url}`
+      `File uploaded: ${result.secure_url}`
     );
 
     return res.status(201).json({
@@ -246,9 +229,7 @@ export const uploadFile = async (
 };
 
 
-// ============================================================
-// UPLOAD MULTIPLE FILES
-// ============================================================
+
 export const uploadMultipleFiles =
   async (req, res) => {
     try {
@@ -451,9 +432,6 @@ export const uploadMultipleFiles =
   };
 
 
-// ============================================================
-// DELETE FILE
-// ============================================================
 export const deleteFile = async (
   req,
   res
@@ -503,9 +481,6 @@ export const deleteFile = async (
 };
 
 
-// ============================================================
-// GET FILE INFO
-// ============================================================
 export const getFileInfo = async (
   req,
   res

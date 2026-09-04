@@ -445,9 +445,8 @@ import AIService from '../services/aiService.js';
 const aiService = new AIService();
 
 export const handleGroupChat = (io, socket) => {
-  // ============================================================
+  
   // JOIN GROUP
-  // ============================================================
   socket.on('join-group', async ({ groupId }) => {
     try {
       if (!groupId) return;
@@ -462,9 +461,9 @@ export const handleGroupChat = (io, socket) => {
     }
   });
 
-  // ============================================================
+  
   // LEAVE GROUP
-  // ============================================================
+
   socket.on('leave-group', async ({ groupId }) => {
     try {
       if (!groupId) return;
@@ -479,9 +478,9 @@ export const handleGroupChat = (io, socket) => {
     }
   });
 
-  // ============================================================
+ 
   // SEND GROUP MESSAGE (TEXT + FILE/MEDIA)
-  // ============================================================
+
   socket.on('group-message', async (data) => {
     try {
       const {
@@ -509,11 +508,6 @@ export const handleGroupChat = (io, socket) => {
 
       let message;
 
-      // ========================================================
-      // FILE / MEDIA MESSAGE
-      // (file already uploaded via /upload/single REST route,
-      //  which already created the Message doc — we just fetch it)
-      // ========================================================
       if (fileMessageId) {
         message = await Message.findById(fileMessageId);
 
@@ -528,9 +522,9 @@ export const handleGroupChat = (io, socket) => {
           await message.save();
         }
       } else {
-        // ======================================================
+       
         // TEXT MESSAGE
-        // ======================================================
+     
         if (!content?.trim()) {
           return socket.emit('error', {
             message: 'Group ID and message are required',
@@ -565,10 +559,9 @@ export const handleGroupChat = (io, socket) => {
         groupId,
       });
 
-      // ========================================================
+     
       // AI MENTION + AUTO AI MODE
-      // (only relevant for text messages, not file/media)
-      // ========================================================
+    
       if (!fileMessageId) {
         const isMentioningAI =
           content.includes('@AI') ||
@@ -680,11 +673,7 @@ export const handleGroupChat = (io, socket) => {
     }
   });
 
-  // ============================================================
-  // EDIT GROUP MESSAGE - REALTIME
-  // (emits 'message-edited' so it matches the frontend listener
-  //  already used for personal chat)
-  // ============================================================
+
   socket.on(
     'group-edit-message',
     async (data) => {
@@ -706,7 +695,7 @@ export const handleGroupChat = (io, socket) => {
           });
         }
 
-        // Only message owner can edit
+      
         const message =
           await Message.findOne({
             _id: messageId,
@@ -722,7 +711,7 @@ export const handleGroupChat = (io, socket) => {
           });
         }
 
-        // Deleted messages cannot be edited
+        
         if (message.isDeleted) {
           return socket.emit('error', {
             message:
@@ -730,7 +719,7 @@ export const handleGroupChat = (io, socket) => {
           });
         }
 
-        // File messages cannot be edited
+       
         if (message.fileUrl) {
           return socket.emit('error', {
             message:
@@ -749,8 +738,7 @@ export const handleGroupChat = (io, socket) => {
           'username avatar'
         );
 
-        // Send updated message to EVERYONE
-        // (event name matches frontend's `message-edited` listener)
+        
         io.to(`group_${groupId}`).emit(
           'message-edited',
           {
@@ -775,11 +763,7 @@ export const handleGroupChat = (io, socket) => {
     }
   );
 
-  // ============================================================
-  // DELETE GROUP MESSAGE - REALTIME
-  // (emits 'message-deleted' so it matches the frontend listener
-  //  already used for personal chat)
-  // ============================================================
+  
   socket.on(
     'group-delete-message',
     async (data) => {
@@ -817,8 +801,7 @@ export const handleGroupChat = (io, socket) => {
 
         await message.save();
 
-        // Send delete event to EVERYONE
-        // (event name matches frontend's `message-deleted` listener)
+       
         io.to(`group_${groupId}`).emit(
           'message-deleted',
           {
@@ -843,9 +826,6 @@ export const handleGroupChat = (io, socket) => {
     }
   );
 
-  // ============================================================
-  // GROUP TYPING
-  // ============================================================
   socket.on(
     'group-typing',
     async (data) => {
@@ -876,10 +856,7 @@ export const handleGroupChat = (io, socket) => {
     }
   );
 
-  // ============================================================
-  // LIVE EMOJI SUGGESTION (while typing)
-  // Frontend debounce karke bhejega, response sirf sender ko jaayega
-  // ============================================================
+ 
   socket.on('suggest-emoji', async (data) => {
     try {
       const { text, groupId } = data;
@@ -900,9 +877,9 @@ export const handleGroupChat = (io, socket) => {
     }
   });
 
-  // ============================================================
+ 
   // ROAST / COMPLIMENT A MESSAGE
-  // ============================================================
+ 
   // socket.on('react-ai', async (data) => {
   //   try {
   //     const { groupId, messageId, mode } = data; // mode = 'roast' | 'compliment'
@@ -996,14 +973,13 @@ export const handleGroupChat = (io, socket) => {
       content: reply,
       isAI: true,
       replyTo: messageId,
-      reactionMode,                 // 👈 NEW — MessageItem isi se label decide karta hai
+      reactionMode,               
       readBy: [socket.userId],
     });
 
     await aiMessage.populate('sender', 'username avatar');
 
-    // 👇 NEW — replyTo ko populate karo, warna sirf ObjectId jayega
-    // aur frontend ka `m.replyTo.content` / `m.replyTo.sender?.username` undefined rahega
+  
     await aiMessage.populate({
       path: 'replyTo',
       select: 'content sender',
@@ -1026,9 +1002,9 @@ export const handleGroupChat = (io, socket) => {
   }
 });
 
-  // ============================================================
+ 
   // ICEBREAKER QUESTION
-  // ============================================================
+
   socket.on('request-icebreaker', async (data) => {
     try {
       const { groupId } = data;
@@ -1071,9 +1047,9 @@ export const handleGroupChat = (io, socket) => {
     }
   });
 
-  // ============================================================
+ 
   // CREATE POLL (from text, using /poll command)
-  // ============================================================
+  
   socket.on('create-poll', async (data) => {
     try {
       const { groupId, text } = data;
@@ -1127,9 +1103,8 @@ export const handleGroupChat = (io, socket) => {
     }
   });
 
-  // ============================================================
   // VOTE ON POLL
-  // ============================================================
+
   socket.on('vote-poll', async (data) => {
     try {
       const { groupId, messageId, optionIndex } = data;
@@ -1151,14 +1126,14 @@ export const handleGroupChat = (io, socket) => {
         return socket.emit('error', { message: 'Poll not found' });
       }
 
-      // Remove user's previous vote from all options (single-choice poll)
+ 
       message.poll.options.forEach((opt) => {
         opt.votes = opt.votes.filter(
           (uid) => uid.toString() !== socket.userId.toString()
         );
       });
 
-      // Add vote to selected option
+  
       if (message.poll.options[optionIndex]) {
         message.poll.options[optionIndex].votes.push(socket.userId);
       }

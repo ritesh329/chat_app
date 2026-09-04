@@ -54,9 +54,7 @@ import User from '../models/User.js';
 export const setupSocketIO = (server) => {
   const io = configureSocket(server);
 
-  // ============================================================
-  // CURRENTLY ONLINE USERS
-  // ============================================================
+
   const onlineUsers = new Set();
 
   io.on('connection', async (socket) => {
@@ -65,35 +63,24 @@ export const setupSocketIO = (server) => {
 
       console.log(`🟢 User connected: ${userId}`);
 
-      // ========================================================
-      // ADD USER TO ONLINE LIST
-      // ========================================================
+    
       onlineUsers.add(userId);
 
-      // ========================================================
-      // UPDATE DATABASE STATUS
-      // ========================================================
       await User.findByIdAndUpdate(userId, {
         status: 'online',
         lastSeen: Date.now(),
       });
 
-      // ========================================================
-      // JOIN PERSONAL ROOM
-      // ========================================================
+    
       socket.join(`user_${userId}`);
 
-      // ========================================================
-      // SEND CURRENT ONLINE USERS TO NEWLY CONNECTED USER
-      // ========================================================
+     
       socket.emit(
         'online-users',
         Array.from(onlineUsers)
       );
 
-      // ========================================================
-      // TELL OTHER USERS THAT THIS USER IS ONLINE
-      // ========================================================
+     
       socket.broadcast.emit(
         'user-online',
         {
@@ -101,38 +88,26 @@ export const setupSocketIO = (server) => {
         }
       );
 
-      // ========================================================
-      // SETUP CHAT HANDLERS
-      // ========================================================
+      
       handlePersonalChat(io, socket);
       handleGroupChat(io, socket);
       handleAI(io, socket);
 
-      // ========================================================
-      // DISCONNECT
-      // ========================================================
+      
       socket.on('disconnect', async () => {
         try {
           console.log(
             `🔴 User disconnected: ${userId}`
           );
 
-          /*
-           * IMPORTANT:
-           *
-           * Same user multiple tabs/devices se connected
-           * ho sakta hai.
-           *
-           * Isliye pehle check karenge ki user ke aur
-           * sockets connected hain ya nahi.
-           */
+        
 
           const connectedSockets =
             await io
               .in(`user_${userId}`)
               .fetchSockets();
 
-          // Agar koi aur socket connected nahi hai
+         
           if (connectedSockets.length === 0) {
             onlineUsers.delete(userId);
 
@@ -144,7 +119,7 @@ export const setupSocketIO = (server) => {
               }
             );
 
-            // Baaki users ko offline batao
+           
             io.emit(
               'user-offline',
               {

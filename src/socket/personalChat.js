@@ -3,9 +3,9 @@ import Chat from '../models/Chat.js';
 
 export const handlePersonalChat = (io, socket) => {
 
-  // ============================================================
+
   // SEND PERSONAL MESSAGE
-  // ============================================================
+ 
   socket.on('personal-message', async (data) => {
     try {
       const {
@@ -23,15 +23,6 @@ export const handlePersonalChat = (io, socket) => {
         return;
       }
 
-      /*
-       * ========================================================
-       * FILE MESSAGE
-       *
-       * Upload API already creates the Message document.
-       * Therefore DO NOT create another Message here.
-       * Just fetch the existing message and broadcast it.
-       * ========================================================
-       */
       if (fileMessageId) {
         const message = await Message.findById(
           fileMessageId
@@ -49,11 +40,7 @@ export const handlePersonalChat = (io, socket) => {
           return;
         }
 
-        /*
-         * Security check:
-         * Only the sender who owns this message
-         * can broadcast it.
-         */
+       
         if (
           message.sender?._id?.toString() !==
           socket.userId.toString()
@@ -64,10 +51,7 @@ export const handlePersonalChat = (io, socket) => {
           return;
         }
 
-        /*
-         * Make sure this message actually belongs
-         * to this chat.
-         */
+       
         if (
           message.chatId.toString() !==
           chatId.toString()
@@ -78,10 +62,7 @@ export const handlePersonalChat = (io, socket) => {
           return;
         }
 
-        /*
-         * Update clientMessageId if supplied.
-         * This helps frontend prevent socket duplicates.
-         */
+       
         if (
           clientMessageId &&
           !message.clientMessageId
@@ -92,9 +73,7 @@ export const handlePersonalChat = (io, socket) => {
           await message.save();
         }
 
-        /*
-         * Update last message.
-         */
+       
         await Chat.findByIdAndUpdate(
           chatId,
           {
@@ -103,12 +82,7 @@ export const handlePersonalChat = (io, socket) => {
           }
         );
 
-        /*
-         * IMPORTANT:
-         *
-         * Emit the SAME database message.
-         * DO NOT Message.create() again.
-         */
+        
         const chat =
           await Chat.findById(chatId)
             .populate(
@@ -141,11 +115,7 @@ export const handlePersonalChat = (io, socket) => {
         return;
       }
 
-      /*
-       * ========================================================
-       * NORMAL TEXT MESSAGE
-       * ========================================================
-       */
+      
 
       if (
         typeof content !== 'string' ||
@@ -232,9 +202,6 @@ export const handlePersonalChat = (io, socket) => {
   });
 
 
-  // ============================================================
-  // TYPING START
-  // ============================================================
   socket.on('typing-start', async (data) => {
     try {
       const { chatId } = data;
@@ -276,9 +243,6 @@ export const handlePersonalChat = (io, socket) => {
   });
 
 
-  // ============================================================
-  // TYPING STOP
-  // ============================================================
   socket.on('typing-stop', async (data) => {
     try {
       const { chatId } = data;
@@ -320,9 +284,7 @@ export const handlePersonalChat = (io, socket) => {
   });
 
 
-  // ============================================================
-  // MARK READ
-  // ============================================================
+
   socket.on('mark-read', async (data) => {
     try {
       const {
@@ -380,9 +342,7 @@ export const handlePersonalChat = (io, socket) => {
   });
 
 
-  // ============================================================
-  // EDIT MESSAGE
-  // ============================================================
+  
   socket.on('edit-message', async (data) => {
     try {
       const {
@@ -446,9 +406,7 @@ export const handlePersonalChat = (io, socket) => {
   });
 
 
-  // ============================================================
-  // DELETE MESSAGE
-  // ============================================================
+
   socket.on('delete-message', async (data) => {
     try {
       const {

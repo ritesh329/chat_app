@@ -40,7 +40,6 @@ router.post('/', protect, createGroup);
 
 router.get('/', protect, getGroups);
 
-// Get complete group chat messages
 router.get('/:groupId/messages', protect, getGroupMessages);
 
 router.get('/:groupId', protect, getGroupById);
