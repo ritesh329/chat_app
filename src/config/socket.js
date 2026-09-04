@@ -7,7 +7,7 @@ dotenv.config();
 export const configureSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: 'http://localhost:5173',
+      origin: 'https://frontendchatapp-k21l.onrender.com',
 
       credentials: true,
 
