@@ -903,62 +903,128 @@ export const handleGroupChat = (io, socket) => {
   // ============================================================
   // ROAST / COMPLIMENT A MESSAGE
   // ============================================================
+  // socket.on('react-ai', async (data) => {
+  //   try {
+  //     const { groupId, messageId, mode } = data; // mode = 'roast' | 'compliment'
+
+  //     if (!groupId || !messageId) {
+  //       return socket.emit('error', {
+  //         message: 'Group ID and message ID are required',
+  //       });
+  //     }
+
+  //     const targetMessage = await Message.findOne({
+  //       _id: messageId,
+  //       chatId: groupId,
+  //       chatType: 'group',
+  //     });
+
+  //     if (!targetMessage || targetMessage.isDeleted) {
+  //       return socket.emit('error', {
+  //         message: 'Message not found',
+  //       });
+  //     }
+
+  //     const reply = await aiService.roastOrCompliment(
+  //       targetMessage.content || 'this',
+  //       mode === 'compliment' ? 'compliment' : 'roast'
+  //     );
+
+  //     if (!reply) return;
+
+  //     const aiMessage = await Message.create({
+  //       sender: socket.userId,
+  //       chatId: groupId,
+  //       chatType: 'group',
+  //       content: reply,
+  //       isAI: true,
+  //       replyTo: messageId,
+  //       readBy: [socket.userId],
+  //     });
+
+  //     await aiMessage.populate('sender', 'username avatar');
+
+  //     await Group.findByIdAndUpdate(groupId, {
+  //       lastMessage: aiMessage._id,
+  //       updatedAt: new Date(),
+  //     });
+
+  //     io.to(`group_${groupId}`).emit('receive-message', {
+  //       message: aiMessage,
+  //       groupId,
+  //       isAI: true,
+  //     });
+  //   } catch (error) {
+  //     console.error('Roast/Compliment error:', error);
+  //     socket.emit('error', { message: 'Failed to generate response' });
+  //   }
+  // });
+
   socket.on('react-ai', async (data) => {
-    try {
-      const { groupId, messageId, mode } = data; // mode = 'roast' | 'compliment'
+  try {
+    const { groupId, messageId, mode } = data;
 
-      if (!groupId || !messageId) {
-        return socket.emit('error', {
-          message: 'Group ID and message ID are required',
-        });
-      }
-
-      const targetMessage = await Message.findOne({
-        _id: messageId,
-        chatId: groupId,
-        chatType: 'group',
+    if (!groupId || !messageId) {
+      return socket.emit('error', {
+        message: 'Group ID and message ID are required',
       });
-
-      if (!targetMessage || targetMessage.isDeleted) {
-        return socket.emit('error', {
-          message: 'Message not found',
-        });
-      }
-
-      const reply = await aiService.roastOrCompliment(
-        targetMessage.content || 'this',
-        mode === 'compliment' ? 'compliment' : 'roast'
-      );
-
-      if (!reply) return;
-
-      const aiMessage = await Message.create({
-        sender: socket.userId,
-        chatId: groupId,
-        chatType: 'group',
-        content: reply,
-        isAI: true,
-        replyTo: messageId,
-        readBy: [socket.userId],
-      });
-
-      await aiMessage.populate('sender', 'username avatar');
-
-      await Group.findByIdAndUpdate(groupId, {
-        lastMessage: aiMessage._id,
-        updatedAt: new Date(),
-      });
-
-      io.to(`group_${groupId}`).emit('receive-message', {
-        message: aiMessage,
-        groupId,
-        isAI: true,
-      });
-    } catch (error) {
-      console.error('Roast/Compliment error:', error);
-      socket.emit('error', { message: 'Failed to generate response' });
     }
-  });
+
+    const targetMessage = await Message.findOne({
+      _id: messageId,
+      chatId: groupId,
+      chatType: 'group',
+    });
+
+    if (!targetMessage || targetMessage.isDeleted) {
+      return socket.emit('error', { message: 'Message not found' });
+    }
+
+    const reactionMode = mode === 'compliment' ? 'compliment' : 'roast';
+
+    const reply = await aiService.roastOrCompliment(
+      targetMessage.content || 'this',
+      reactionMode
+    );
+
+    if (!reply) return;
+
+    const aiMessage = await Message.create({
+      sender: socket.userId,
+      chatId: groupId,
+      chatType: 'group',
+      content: reply,
+      isAI: true,
+      replyTo: messageId,
+      reactionMode,                 // 👈 NEW — MessageItem isi se label decide karta hai
+      readBy: [socket.userId],
+    });
+
+    await aiMessage.populate('sender', 'username avatar');
+
+    // 👇 NEW — replyTo ko populate karo, warna sirf ObjectId jayega
+    // aur frontend ka `m.replyTo.content` / `m.replyTo.sender?.username` undefined rahega
+    await aiMessage.populate({
+      path: 'replyTo',
+      select: 'content sender',
+      populate: { path: 'sender', select: 'username' },
+    });
+
+    await Group.findByIdAndUpdate(groupId, {
+      lastMessage: aiMessage._id,
+      updatedAt: new Date(),
+    });
+
+    io.to(`group_${groupId}`).emit('receive-message', {
+      message: aiMessage,
+      groupId,
+      isAI: true,
+    });
+  } catch (error) {
+    console.error('Roast/Compliment error:', error);
+    socket.emit('error', { message: 'Failed to generate response' });
+  }
+});
 
   // ============================================================
   // ICEBREAKER QUESTION
